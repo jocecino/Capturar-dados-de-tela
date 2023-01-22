@@ -1,33 +1,52 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-    const browser = await puppeteer.launch({ headless: false });
-    const page = await browser.newPage();
-    await page.goto('https://casino.betfair.com/pt-br/c/roleta');
+    // Iniciando uma nova instância do navegador com modo headless desativado
+    const browser = await puppeteer.launch({ headless: false }); 
+    // criando uma nova página
+    const page = await browser.newPage(); 
+    // Navegando para a página de roleta
+    await page.goto('https://casino.betfair.com/pt-br/c/roleta'); 
 
-    const sequenciasAnteriores = [[1,3,], [2,4,], [3,5],[4,6],[5,7],[6,8],[26,26],[36,35],[6,23,12]];
-    let lista = [];
+ // armazena os últimos 8 números
+let lista = []; 
+// números padrão de cavalo 2,5 e 8
+const horseNumbers = [2, 5, 8, 12, 15, 18, 22, 25, 28, 32, 35]; 
 
-    while (true) {
-        for (let x = 0; x < 8; x++) {
-            let elem = await page.$$('.number');
-            let elem2 = await page.evaluate(el => el.textContent, elem[elem.length - x - 1]);
-            lista.push(elem2);
-        }
-    
-        if (lista.slice(-8).toString() === sequenciasAnteriores.toString() || lista.slice(-8).reverse().toString() === sequenciasAnteriores.toString()) {
-            console.log(`Sequencia repetida: ${lista.slice(-8)}`);
-            // emitir alerta aqui
-        } else {
-            sequenciasAnteriores.push(lista.slice(-8));
-        }
-    
-        console.log(lista.slice(-8));
-        lista = [];
-
-
-        await page.waitForTimeout(40000);
+// loop infinito
+while (true) {
+    for (let x = 0; x < 8; x++) {
+        // pegando elementos com classe 'number'
+        let elem = await page.$$('.number'); 
+        // pegando o texto contido nesses elementos
+        let elem2 = await page.evaluate(el => el.textContent, elem[elem.length - x - 1]); 
+        // adicionando os números à lista
+        lista.push(elem2); 
     }
-    
-    await browser.close();
+
+    const checkHorse = (lista, horseNumbers) => {
+        // se a lista não tiver 8 elementos, não faz nada
+        if(lista.length < 8) return; 
+        let match = false;
+        // loop para verificar se os números padrão aparecem em sequência tripla na lista
+        for (let i = 0; i < horseNumbers.length; i++) {
+            if (lista.slice(-8).join('').indexOf(`${horseNumbers[i]}${horseNumbers[i]}${horseNumbers[i]}`) !== -1) {
+                match = true;
+            }
+        }
+        if (match) {
+            alert("Padrão de cavalo encontrado: " + lista.slice(-8));
+            // emitir alerta aqui
+        }
+    }
+    // chamando a função checkHorse
+    checkHorse(lista, horseNumbers); 
+    // imprimindo os últimos 8 números
+    console.log(lista.slice(-8)); 
+    // limpando a lista
+    lista = []; 
+    // esperando 40 segundos antes de continuar o loop
+    await page.waitForTimeout(40000); 
+}
+await browser.close(); 
 })();
